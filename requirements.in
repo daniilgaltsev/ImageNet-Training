@@ -1,0 +1,5 @@
+numpy
+opencv-python-headless
+torch==1.7.1+cu110
+pytorch-lightning
+requests
