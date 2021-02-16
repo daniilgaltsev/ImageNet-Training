@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 import torch
 import efficientnet_pytorch
+#import ipdb
 
 
 class Datatest(torch.utils.data.Dataset):
@@ -20,9 +21,10 @@ class LitModel(pl.LightningModule):
     def forward(self, x):
         return self.model(x)
 
-    def training_step(self, x, y):
-        out = self(x)
-        loss = self.loss(out, x)
+    def training_step(self, batch, batch_idx):
+        #ipdb.set_trace()
+        out = self(batch[0])
+        loss = self.loss(out, batch[1])
         return super().training_step(*args, **kwargs)
 
     def configure_optimizers(self):
@@ -30,17 +32,24 @@ class LitModel(pl.LightningModule):
 
 
 def gpu_test():
-    batch_size = 1
+    batch_size = 2
 
     dataset = Datatest()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, pin_memory=True, drop_last=True, num_workers=4)
     base_model = efficientnet_pytorch.EfficientNet.from_pretrained('efficientnet-b0')
     model = LitModel(base_model)
-    
-    print(pl.Trainer.__doc__)
-    trainer = pl.Trainer(max_steps=1)
 
-    trainer.fit(model, dataloader)
+    for x, y in dataloader:
+        print(x.shape)
+        print(y.shape)
+        break
+
+    #res = model(x)
+    #print(res)
+    
+    # trainer = pl.Trainer(max_steps=1)
+
+    # trainer.fit(model, dataloader)
 
 if __name__ == "__main__":
     gpu_test()

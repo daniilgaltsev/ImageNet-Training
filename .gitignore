@@ -1,3 +1,8 @@
+data/downloaded
+data/processed
+data/interim
+
+
 __pycache__
 .ipynb_checkpoints
 lightning_logs
