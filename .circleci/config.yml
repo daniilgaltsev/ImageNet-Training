@@ -1,21 +1,28 @@
-version: 2.1
-
-orbs:
-  python: circleci/python@0.2.1
+version: 2
 
 jobs:
-  build-and-test:
-    executor: python/default
+  build:
+    docker:
+      - image: circleci/python:3.7
+
     steps:
       - checkout
-      - python/load-cache
-      - python/install-deps
-      - python/save-cache
-      - run:
-          command: ./manage.py test
-          name: Test
 
-workflows:
-  main:
-    jobs:
-      - build-and-test
+      - restore_cache:
+        keys:
+          - cache-{{checksum "requirements/requirements.txt"}-{checksum "requirements/requirements-dev.txt"}}
+
+      - run:
+          name: Install requirements
+          command:
+            pip install -r requirements.txt
+            pip install -r requirements-dev.txt
+      - save_cache:
+        key: cache-{{checksum "requirements/requirements.txt"}-{checksum "requirements/requirements-dev.txt"}}
+        paths:
+          - ~/.local
+
+    steps:
+      - run:
+          name: Run linting
+          when: always

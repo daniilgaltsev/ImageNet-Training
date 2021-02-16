@@ -300,6 +300,8 @@ send2trash==1.5.0
     #   notebook
 sentry-sdk==0.20.2
     # via wandb
+shellcheck-py==0.7.1.1
+    # via -r requirements-dev.in
 shortuuid==1.0.1
     # via wandb
 six==1.15.0

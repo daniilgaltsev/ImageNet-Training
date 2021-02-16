@@ -6,13 +6,14 @@ itermplot
 jupyterlab
 matplotlib
 mypy
+pillow
 pycodestyle
 pydocstyle
 pylint
 pytest
 pyyaml
-tornado
 safety
 scipy
-pillow
+shellcheck-py
+tornado
 wandb
