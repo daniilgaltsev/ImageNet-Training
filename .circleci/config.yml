@@ -19,7 +19,7 @@ jobs:
             pip install -r requirements/requirements-dev.txt
 
       - save_cache:
-          key: cache-{{checksum "requirements/requirements.txt"}-{checksum "requirements/requirements-dev.txt"}}
+          key: cache-{{ checksum "requirements/requirements.txt" }}-{{ checksum "requirements/requirements-dev.txt" }}
           paths:
             - ~/.local
 
@@ -27,4 +27,4 @@ jobs:
           name: Run linting
           when: always
           command: |
-            ./tasks/lint.sh
+            bash ./tasks/lint.sh
