@@ -3,7 +3,6 @@
 bandit
 black
 itermplot
-jupyterlab
 matplotlib
 mypy
 pillow
