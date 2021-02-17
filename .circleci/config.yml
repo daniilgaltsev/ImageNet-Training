@@ -4,27 +4,32 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.7
-
     steps:
       - checkout
-
       - restore_cache:
           keys:
           - cache-{{ checksum "requirements/requirements.txt" }}-{{ checksum "requirements/requirements-dev.txt" }}
-
       - run:
           name: Install requirements
           command:
             pip install -r requirements/requirements.txt
             pip install -r requirements/requirements-dev.txt
-
       - save_cache:
           key: cache-{{ checksum "requirements/requirements.txt" }}-{{ checksum "requirements/requirements-dev.txt" }}
           paths:
             - ~/.local
-
       - run:
           name: Run linting
           when: always
           command: |
             bash ./tasks/lint.sh
+
+workflows:
+  version: 2
+  wait_approval_and_build:
+    jobs:
+      - hold:
+          type: approval
+      - build:
+          requires:
+            - hold
