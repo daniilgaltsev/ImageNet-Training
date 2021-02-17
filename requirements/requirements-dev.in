@@ -14,5 +14,4 @@ pyyaml
 safety
 scipy
 shellcheck-py
-tornado
 wandb
