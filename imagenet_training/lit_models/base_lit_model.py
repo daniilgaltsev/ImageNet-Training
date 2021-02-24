@@ -15,8 +15,7 @@ LOSS = "cross_entropy"
 
 
 class BaseLitModel(pl.LightningModule):
-    """
-    Base LightningModule class
+    """Base LightningModule class.
 
     Args:
         model: a torch module to use as backbone.
@@ -50,18 +49,22 @@ class BaseLitModel(pl.LightningModule):
 
     @staticmethod
     def add_to_argparse(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-        parser.add_argument("--optimizer", type=str, default=OPTIMIZER, help="Name of optimizer class from torch.optim.")
+        """Adds possible args to the given parser."""
+        parser.add_argument("--optimizer", type=str, default=OPTIMIZER, help="Name of optimizer from torch.optim.")
         parser.add_argument("--lr", type=float, default=LR, help="Base learning rate.")
         parser.add_argument("--loss", type=str, default=LOSS, help="Name of loss function from torch.nn.functional.")
         return parser
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
+        """Inits and returns optimizer to use."""
         return self.optimizer_class(self.parameters(), lr=self.lr)
 
-    def forward(self, x: Any) -> Any:
+    def forward(self, x: Any) -> Any:  # pylint: disable=arguments-differ
+        """Performs a forward operation."""
         return self.model(x)
 
-    def training_step(self, batch: Any, batch_idx: int):
+    def training_step(self, batch: Any, batch_idx: int):  # pylint: disable=unused-argument,arguments-differ
+        """Performs a training step on a given batch."""
         x, y = batch
 
         logits = self(x)
@@ -74,9 +77,10 @@ class BaseLitModel(pl.LightningModule):
 
         return loss
 
-    def validation_step(self, batch: Any, batch_idx: int):
+    def validation_step(self, batch, batch_idx):  # pylint: disable=unused-argument,arguments-differ
+        """Performs a validation step on a given batch."""
         x, y = batch
-        
+
         logits = self(x)
 
         loss = self.loss_fn(logits, y)
@@ -84,10 +88,11 @@ class BaseLitModel(pl.LightningModule):
 
         self.train_acc(logits, y)
         self.log("val_acc", self.train_acc, on_step=False, on_epoch=True, prog_bar=True)
-    
-    def test_step(self, batch: Any, batch_idx: int):
+
+    def test_step(self, batch: Any, batch_idx: int) -> None:  # pylint: disable=unused-argument,arguments-differ
+        """Performs a test step on a given batch."""
         x, y = batch
-        
+
         logits = self(x)
 
         loss = self.loss_fn(logits, y)
@@ -95,4 +100,3 @@ class BaseLitModel(pl.LightningModule):
 
         self.train_acc(logits, y)
         self.log("test_acc", self.train_acc, on_step=False, on_epoch=True)
-    

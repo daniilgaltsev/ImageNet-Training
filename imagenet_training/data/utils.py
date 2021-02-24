@@ -1,4 +1,4 @@
-"""Utility functions for data module"""
+"""Utility functions for data module."""
 
 from pathlib import Path
 from typing import Dict
@@ -7,12 +7,11 @@ import imagenet_training.utils
 
 
 def _download_raw_dataset(metadata: Dict[str, str], dl_path: Path) -> Path:
-    """Downloads data based on metadata to dl_path"""
-
+    """Downloads data based on metadata to dl_path."""
     dl_path.mkdir(parents=True, exist_ok=True)
     filename = dl_path / metadata["filename"]
     if filename.exists():
-        return
+        return filename
 
     print("Downloading data from {} to {}.".format(metadata["url"], filename))
     imagenet_training.utils.download_url(metadata["url"], filename)
@@ -23,4 +22,3 @@ def _download_raw_dataset(metadata: Dict[str, str], dl_path: Path) -> Path:
         raise ValueError("Downloaded data checksum does not match the one specified in metadata.")
 
     return filename
-

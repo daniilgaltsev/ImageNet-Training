@@ -7,8 +7,7 @@ import torch
 
 
 class BaseDataset(torch.utils.data.Dataset):
-    """
-    Base dataset class that processes data with optional transforms.
+    """Base dataset class that processes data with optional transforms.
 
     Args:
         data: A tensor or a sequence containing data to store.
@@ -40,7 +39,7 @@ class BaseDataset(torch.utils.data.Dataset):
 
         if self.transform is not None:
             item = self.transform(item)
-        
+
         if self.transform_target is not None:
             target = self.transform_target(target)
 

@@ -4,9 +4,8 @@ import argparse
 import importlib
 
 import numpy as np
-from pytorch_lightning import trainer
-import torch
 import pytorch_lightning as pl
+import torch
 
 from imagenet_training import lit_models
 
@@ -19,13 +18,11 @@ torch.manual_seed(SEED)
 
 
 def _import_class(module_and_class_name: str) -> type:
-    """
-    Imports class from the module.
+    """Imports class from the module.
 
     Args:
         module_and_class_name: A string containing module and class name ("<module>.<class>").
     """
-
     module_name, class_name = module_and_class_name.rsplit('.', 1)
     module = importlib.import_module(module_name)
     class_ = getattr(module, class_name)
@@ -33,14 +30,12 @@ def _import_class(module_and_class_name: str) -> type:
 
 
 def _setup_parser() -> argparse.ArgumentParser:
-    """
-    Setups ArgumentParser with all needed args (from data, model, trainer, etc.)
-    """
+    """Setups ArgumentParser with all needed args (from data, model, trainer, etc.)."""
     parser = argparse.ArgumentParser()
-    
+
     print('Before trainer')
     trainer_parser = pl.Trainer.add_argparse_args(parser)
-    trainer_parser._action_groups[1].title = "Trainer Args"
+    trainer_parser._action_groups[1].title = "Trainer Args"  # pylint: disable=protected-access
     parser = argparse.ArgumentParser(add_help=False, parents=[trainer_parser])
 
     parser.add_argument("--data_class", type=str, default="CIFAR10", help="Name of data module to use.")
@@ -65,18 +60,15 @@ def _setup_parser() -> argparse.ArgumentParser:
 
     return parser
 
-import ipdb
-def main() -> None:
-    """
-    Runs an experiment with specified args.
-    """
 
+def main() -> None:
+    """Runs an experiment with specified args."""
     parser = _setup_parser()
     args = parser.parse_args()
     print("Running an experiment with specified args:")
     # ipdb.set_trace()
     print(args)
-    
+
     data_class = _import_class(DATA_CLASS_TEMPLATE.format(args.data_class))
     model_class = _import_class(MODEL_CLASS_TEMPLATE.format(args.model_class))
     data = data_class(args=args)
@@ -90,10 +82,10 @@ def main() -> None:
 
     trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=loggers, default_root_dir="training/logs")
 
-    trainer.tune(lit_model, datamodule=data)
+    trainer.tune(lit_model, datamodule=data)  # pylint: disable=no-member
 
-    trainer.fit(lit_model, datamodule=data)
-    trainer.test(lit_model, datamodule=data)
+    trainer.fit(lit_model, datamodule=data)  # pylint: disable=no-member
+    trainer.test(lit_model, datamodule=data)  # pylint: disable=no-member
 
 
 if __name__ == "__main__":

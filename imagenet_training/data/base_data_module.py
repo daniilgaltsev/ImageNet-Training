@@ -2,7 +2,7 @@
 
 import argparse
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
@@ -13,9 +13,7 @@ NUM_WORKERS = 0
 
 
 class BaseDataModule(pl.LightningDataModule):
-    """
-    Base data module.
-    """
+    """Base data module class."""
 
     def __init__(self, args: argparse.Namespace):
         super().__init__()
@@ -31,16 +29,18 @@ class BaseDataModule(pl.LightningDataModule):
         self.output_dims = None
         self.mapping = None
 
+        self.data_train = None
+        self.data_val = None
+        self.data_test = None
+
     @classmethod
     def data_dirname(cls) -> Path:
         """Returns the path to the data folder."""
-
         return Path(__file__).resolve().parents[2] / "data"
 
     @staticmethod
     def add_to_argparse(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         """Adds arguments to parser required for the BaseDataModule."""
-
         parser.add_argument(
             "--batch_size", type=int, default=BATCH_SIZE, help="Number of examples per batch."
         )
@@ -52,18 +52,18 @@ class BaseDataModule(pl.LightningDataModule):
 
     def config(self) -> Dict[str, Any]:
         """Returns a dict of options used to init a model."""
-
         return {"input_dims": self.dims, "output_dims": self.output_dims, "mapping": self.mapping}
 
-    def prepare_data(self) -> None:
-        pass
+    def prepare_data(self) -> None:  # pylint: disable=arguments-differ
+        """Prepares data for the node globally."""
+        return
 
-    def setup(self) -> None:
-        self.data_train = None
-        self.data_val = None
-        self.data_test = None
+    def setup(self, stage: Optional[str]) -> None:  # pylint: disable=signature-differs
+        """Prepares data for each process given stage."""
+        return
 
-    def train_dataloader(self) -> DataLoader:
+    def train_dataloader(self) -> DataLoader:  # pylint: disable=arguments-differ
+        """Returns prepared train dataloader."""
         return DataLoader(
             dataset=self.data_train,
             batch_size=self.batch_size,
@@ -72,7 +72,8 @@ class BaseDataModule(pl.LightningDataModule):
             drop_last=True
         )
 
-    def val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> DataLoader:  # pylint: disable=arguments-differ
+        """Returns prepared validation dataloader."""
         return DataLoader(
             dataset=self.data_val,
             batch_size=self.batch_size,
@@ -81,7 +82,8 @@ class BaseDataModule(pl.LightningDataModule):
             drop_last=False
         )
 
-    def test_dataloader(self) -> DataLoader:
+    def test_dataloader(self) -> DataLoader:  # pylint: disable=arguments-differ
+        """Returns prepared test dataloader."""
         return DataLoader(
             dataset=self.data_test,
             batch_size=self.batch_size,

@@ -3,7 +3,7 @@
 
 import argparse
 from collections import OrderedDict
-from typing import Any, Dict, Optional, OrderedDict
+from typing import Any, Dict, Optional
 
 import numpy as np
 import torch
@@ -15,8 +15,7 @@ FC2_DIM = 512
 
 
 class MLP(nn.Module):
-    """
-    A simple MLP model.
+    """A simple MLP model.
 
     Args:
         data_config: a dictionary containing information about data.
@@ -52,11 +51,13 @@ class MLP(nn.Module):
         ]))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Performs forward operation on a given tensor."""
         x = self.mlp(x)
         return x
 
     @staticmethod
     def add_to_argparse(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+        """Adds possible agrs to the given parser."""
         parser.add_argument("--fc1", type=int, default=FC1_DIM, help="Size of the first hidden MLP layer.")
         parser.add_argument("--fc2", type=int, default=FC2_DIM, help="Size of the second hidden MLP layer.")
         return parser

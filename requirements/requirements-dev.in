@@ -9,7 +9,8 @@ mypy
 pillow
 pycodestyle
 pydocstyle
-pylint
+pylint==2.6.0
+astroid < 2.5
 pytest
 pyyaml
 safety

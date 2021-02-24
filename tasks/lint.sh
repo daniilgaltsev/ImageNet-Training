@@ -27,9 +27,9 @@ echo "Running pydocstyle"
 pydocstyle imagenet_training training || FAILURES[3]=true
 echo "pydocstyle failure: ${FAILURES[3]}"
 
-echo "Running mypy"
-mypy imagenet_training training || FAILURES[4]=true
-echo "mypy failure: ${FAILURES[4]}"
+# echo "Running mypy"
+# mypy imagenet_training training || FAILURES[4]=true
+# echo "mypy failure: ${FAILURES[4]}"
 
 echo "Running bandit"
 bandit -ll -r imagenet_training training || FAILURES[5]=true
