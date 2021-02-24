@@ -2,6 +2,7 @@
 
 bandit
 black
+ipdb
 itermplot
 matplotlib
 mypy

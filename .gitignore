@@ -6,6 +6,7 @@ data/interim
 __pycache__
 .ipynb_checkpoints
 lightning_logs
+training/logs
 
 
 !.gitkeep

@@ -16,29 +16,28 @@ safety check -r requirements/requirements.txt -r requirements/requirements-dev.t
 echo "safety failure: ${FAILURES[0]}"
 
 echo "Running pylint"
-pylint imagenet_training || FAILURES[1]=true
+pylint imagenet_training training || FAILURES[1]=true
 echo "pylint failure: ${FAILURES[1]}"
 
 echo "Running pycodestyle"
-pycodestyle imagenet_training || FAILURES[2]=true
+pycodestyle imagenet_training training || FAILURES[2]=true
 echo "pycodestyle failure: ${FAILURES[2]}"
 
 echo "Running pydocstyle"
-pydocstyle imagenet_training || FAILURES[3]=true
+pydocstyle imagenet_training training || FAILURES[3]=true
 echo "pydocstyle failure: ${FAILURES[3]}"
 
 echo "Running mypy"
-mypy imagenet_training || FAILURES[4]=true
+mypy imagenet_training training || FAILURES[4]=true
 echo "mypy failure: ${FAILURES[4]}"
 
 echo "Running bandit"
-bandit -ll -r imagenet_training || FAILURES[5]=true
+bandit -ll -r imagenet_training training || FAILURES[5]=true
 echo "bandit failure: ${FAILURES[5]}"
 
 echo "shellcheck"
 shellcheck tasks/*.sh || FAILURES[6]=true
 echo "shellcheck failure: ${FAILURES[6]}"
-
 
 for failure in "${FAILURES[@]}"
 do
