@@ -1,0 +1,5 @@
+[default]
+entity = daniilgaltsev
+project = imagenet_training
+base_url = https://api.wandb.ai
+

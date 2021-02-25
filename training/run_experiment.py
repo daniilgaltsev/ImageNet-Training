@@ -5,6 +5,7 @@ import importlib
 
 import numpy as np
 import pytorch_lightning as pl
+from pytorch_lightning.loggers import WandbLogger
 import torch
 
 from imagenet_training import lit_models
@@ -31,9 +32,8 @@ def _import_class(module_and_class_name: str) -> type:
 
 def _setup_parser() -> argparse.ArgumentParser:
     """Setups ArgumentParser with all needed args (from data, model, trainer, etc.)."""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
 
-    print('Before trainer')
     trainer_parser = pl.Trainer.add_argparse_args(parser)
     trainer_parser._action_groups[1].title = "Trainer Args"  # pylint: disable=protected-access
     parser = argparse.ArgumentParser(add_help=False, parents=[trainer_parser])
@@ -41,22 +41,23 @@ def _setup_parser() -> argparse.ArgumentParser:
     parser.add_argument("--data_class", type=str, default="CIFAR10", help="Name of data module to use.")
     parser.add_argument("--model_class", type=str, default="MLP", help="Name of model module to use.")
 
-    print('Before data, model')
+    parser.add_argument("--use_wandb", default=False, action="store_true", help="If true, will use wandb.")
+    parser.add_argument("--group", type=str, default="", help="Experiment group to log in wandb.")
+
     temp_args, _ = parser.parse_known_args()
     data_class = _import_class(DATA_CLASS_TEMPLATE.format(temp_args.data_class))
     model_class = _import_class(MODEL_CLASS_TEMPLATE.format(temp_args.model_class))
 
-    data_group = parser.add_argument_group("Data Args")
+    data_group = parser.add_argument_group(f"Data Args for {temp_args.data_class}")
     data_class.add_to_argparse(data_group)
 
-    model_group = parser.add_argument_group("Model Args")
+    model_group = parser.add_argument_group(f"Model Args for {temp_args.model_class}")
     model_class.add_to_argparse(model_group)
 
-    print('Before lit_model')
     lit_model_group = parser.add_argument_group("LitModel Args")
     lit_models.BaseLitModel.add_to_argparse(lit_model_group)
 
-    # parser.add_argument("--help", "-h", action="help")
+    parser.add_argument("--help", "-h", action="help")
 
     return parser
 
@@ -77,7 +78,12 @@ def main() -> None:
     lit_model = lit_models.BaseLitModel(model, args=args)
 
     loggers = []
+    if args.use_wandb:
+        wandb_logger = WandbLogger(config=args, group=args.group)
+        loggers.append(wandb_logger)
+
     callbacks = [pl.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=10)]
+
     args.weights_summary = "full"
 
     trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=loggers, default_root_dir="training/logs")
