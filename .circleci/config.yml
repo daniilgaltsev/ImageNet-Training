@@ -23,6 +23,11 @@ jobs:
           when: always
           command: |
             bash ./tasks/lint.sh
+      - run:
+          name: Test functionality
+          when: always
+          command: |
+            bash ./tasks/test_functionality.sh
 
 workflows:
   version: 2
