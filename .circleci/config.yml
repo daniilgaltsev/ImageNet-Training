@@ -10,6 +10,10 @@ jobs:
           keys:
           - cache-{{ checksum "requirements/requirements.txt" }}-{{ checksum "requirements/requirements-dev.txt" }}
       - run:
+          name: Install missing library
+          command:
+            sudo apt update && sudo apt install -y --no-install-recommends libtinfo5
+      - run:
           name: Install requirements
           command:
             pip install -r requirements/requirements.txt
