@@ -17,7 +17,7 @@ from imagenet_training.data.base_data_module import BaseDataModule
 from imagenet_training.data.base_dataset import BaseDataset
 from imagenet_training.data.utils import _download_raw_dataset
 
-
+import ipdb
 TRAIN_SPLIT = 0.8
 SEED = 0
 
@@ -48,7 +48,7 @@ class CIFAR10(BaseDataModule):
         self.transform = transforms.Compose([
             transforms.ToTensor()
         ])
-        self.dims = (1, *essentials['input_shape'])
+        self.dims = (1, essentials['input_shape'][2], *essentials['input_shape'][:2])
         self.output_dims = (1,)
 
     def prepare_data(self) -> None:
@@ -110,6 +110,7 @@ def _process_raw_dataset(filename: str, dirname: Path) -> None:
         else:
             labels = np.array(contents[key][b'labels'])
             data = contents[key][b'data'].reshape(-1, 3, 32, 32)
+            data = np.transpose(data, (0, 2, 3, 1))
 
             if key.find('data_') == -1:
                 x_test = data
