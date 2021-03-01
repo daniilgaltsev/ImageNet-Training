@@ -46,7 +46,8 @@ class CIFAR10(BaseDataModule):
         self.data_val = None
         self.data_test = None
         self.transform = transforms.Compose([
-            transforms.ToTensor()
+            transforms.ToTensor(),
+            transforms.Normalize([0.4918, 0.4824, 0.4467], [0.2470, 0.2434, 0.2617])
         ])
         self.dims = (1, essentials['input_shape'][2], *essentials['input_shape'][:2])
         self.output_dims = (1,)

@@ -11,12 +11,10 @@ from imagenet_training.models.resnet import ResNet
 @pytest.mark.parametrize("model_type, input_shape", [
     ("resnet18", (2, 3, 32, 32)),
     ("resnet18", (3, 3, 37, 43)),
-    ("resnet18", (2, 3, 224, 224)),
     ("resnet34", (2, 3, 32, 32)),
     ("resnet50", (2, 3, 32, 32)),
-    ("resnet50", (3, 3, 37, 43)),
+    ("resnet50", (2, 3, 37, 43)),
     ("resnet101", (2, 3, 32, 32)),
-    ("resnet152", (2, 3, 32, 32))
 ])
 def test_resnet_shapes(model_type: str, input_shape: Tuple[int, int, int, int]):
     """ Test that scripted LightningModule forward works. """
