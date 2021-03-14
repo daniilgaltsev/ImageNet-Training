@@ -3,6 +3,7 @@
 
 import argparse
 from collections import OrderedDict
+import importlib
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import torch
@@ -18,6 +19,7 @@ TYPE_TO_ARGS = {
     "resnet101": ([3, 4, 23, 3], ResNetBottleneck),
     "resnet152": ([3, 8, 36, 3], ResNetBottleneck),
 }
+USE_TORCHVISION_MODEL = False
 
 
 class ResNet(nn.Module):
@@ -41,15 +43,23 @@ class ResNet(nn.Module):
             self.args = vars(args)
 
         input_dims = data_config["input_dims"]
-        if input_dims[1] < 32 or input_dims[2] < 32:
-            raise ValueError("Minimum input width and height for ResNet is 32 (3x32x32).")
+        if len(input_dims) != 4:
+            raise ValueError(f"Expected input_dims to have 4 dimensions got {len(input_dims)}")
+        if input_dims[2] < 32 or input_dims[3] < 32:
+            raise ValueError(f"Minimum input width and height for ResNet is 32 (3x32x32) got {input_dims}.")
         num_classes = len(data_config["mapping"])
-        model_type = self.args.get("model_type", None)
-        if model_type is None or model_type not in TYPE_TO_ARGS:
+        resnet_type = self.args.get("resnet_type", None)
+        if resnet_type is None or resnet_type not in TYPE_TO_ARGS:
             raise ValueError("Type of resnet model is not specified or incorrect (resnet{18, 34, 50, 101, 152}).")
+        use_torchvision = self.args.get("use_torchvision_model", USE_TORCHVISION_MODEL)
 
-        num_blocks, block = TYPE_TO_ARGS[model_type]
-        self.model = _ResNet(num_blocks, block, num_classes)
+        if use_torchvision:
+            tv_models_module = importlib.import_module("torchvision.models")
+            self.model = getattr(tv_models_module, resnet_type)
+            self.model.fc = nn.Linear(self.model.fc.in_features, num_classes)
+        else:
+            num_blocks, block = TYPE_TO_ARGS[resnet_type]
+            self.model = _ResNet(num_blocks, block, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Returns tensor of logits for each class."""
@@ -59,9 +69,14 @@ class ResNet(nn.Module):
     def add_to_argparse(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         """Adds possible args to the given parser."""
         parser.add_argument(
-            "--model_type", type=str, default="resnet18",
+            "--resnet_type", type=str, default="resnet18",
             help="Type of resnet to use (resnet{18, 34, 50, 101, 152})."
         )
+        parser.add_argument(
+            "--use_torchvision_model", default=False, action="store_true",
+            help="If true, will use resnet architecture from torchvision."
+        )
+
         return parser
 
 

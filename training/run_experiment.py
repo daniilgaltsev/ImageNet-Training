@@ -2,6 +2,7 @@
 
 import argparse
 import importlib
+import random
 
 import numpy as np
 import pytorch_lightning as pl
@@ -13,9 +14,6 @@ from imagenet_training import lit_models
 DATA_CLASS_TEMPLATE = "imagenet_training.data.{}"
 MODEL_CLASS_TEMPLATE = "imagenet_training.models.{}"
 SEED = 0
-
-np.random.seed(SEED)
-torch.manual_seed(SEED)
 
 
 def _import_class(module_and_class_name: str) -> type:
@@ -44,6 +42,10 @@ def _setup_parser() -> argparse.ArgumentParser:
     parser.add_argument("--use_wandb", default=False, action="store_true", help="If true, will use wandb.")
     parser.add_argument("--group", type=str, default="", help="Experiment group to log in wandb.")
 
+    parser.add_argument("--patience", type=int, default=10, help="Patience for Early Stopping.")
+
+    parser.add_argument("--seed", type=int, default=SEED)
+
     temp_args, _ = parser.parse_known_args()
     data_class = _import_class(DATA_CLASS_TEMPLATE.format(temp_args.data_class))
     model_class = _import_class(MODEL_CLASS_TEMPLATE.format(temp_args.model_class))
@@ -62,6 +64,13 @@ def _setup_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _set_seeds(seed: int) -> None:
+    """Sets seed for RNGs."""
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    random.seed(seed)
+
+
 def main() -> None:
     """Runs an experiment with specified args."""
     parser = _setup_parser()
@@ -69,6 +78,8 @@ def main() -> None:
     print("Running an experiment with specified args:")
     # ipdb.set_trace()
     print(args)
+
+    _set_seeds(args.seed)
 
     data_class = _import_class(DATA_CLASS_TEMPLATE.format(args.data_class))
     model_class = _import_class(MODEL_CLASS_TEMPLATE.format(args.model_class))
@@ -82,7 +93,7 @@ def main() -> None:
         wandb_logger = WandbLogger(config=args, group=args.group)
         loggers.append(wandb_logger)
 
-    callbacks = [pl.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=10)]
+    callbacks = [pl.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=args.patience)]
 
     args.weights_summary = "full"
 

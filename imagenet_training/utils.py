@@ -19,7 +19,7 @@ def compute_sha256(filename: Union[Path, str]) -> str:
 
 
 def download_url(url: str, filename: Union[Path, str]) -> None:
-    """Downloads data from url.
+    """Downloads data from url to file.
 
     Args:
         url: url to the data to download.
