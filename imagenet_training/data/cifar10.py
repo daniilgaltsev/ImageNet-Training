@@ -1,5 +1,6 @@
 """CIFAR-10 data module that downloads and saves data as .npz files if not already present."""
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -17,7 +18,7 @@ from imagenet_training.data.base_data_module import BaseDataModule
 from imagenet_training.data.base_dataset import BaseDataset
 from imagenet_training.data.utils import _download_raw_dataset
 
-import ipdb
+
 TRAIN_SPLIT = 0.8
 SEED = 0
 
@@ -32,7 +33,7 @@ ESSENTIALS_FILENAME = Path(__file__).parents[0].resolve() / "cifar10_essentials.
 class CIFAR10(BaseDataModule):
     """CIFAR-10 data module that downloads and saves data as .npz files if not already present."""
 
-    def __init__(self, args=None):
+    def __init__(self, args: Optional[argparse.Namespace] = None):
         super().__init__(args)
 
         if not os.path.exists(ESSENTIALS_FILENAME):
@@ -47,10 +48,11 @@ class CIFAR10(BaseDataModule):
         self.data_test = None
         self.transform = transforms.Compose([
             transforms.ToTensor(),
+            # Calculated using imagenet_trianing.data.utils.calculate_mean_and_std
             transforms.Normalize([0.4918, 0.4824, 0.4467], [0.2470, 0.2434, 0.2617])
         ])
         self.dims = (1, essentials['input_shape'][2], *essentials['input_shape'][:2])
-        self.output_dims = (1,)
+        self.output_dims = (len(self.mapping),)
 
     def prepare_data(self) -> None:
         """Prepares data for the node globally."""
@@ -80,7 +82,7 @@ class CIFAR10(BaseDataModule):
             self.data_test = BaseDataset(self.x_test, self.y_test, transform=self.transform)
 
 
-def _download_and_process_cifar10():
+def _download_and_process_cifar10() -> None:
     """Downloads and processes CIFAR-10 dataset from a metadata file."""
     metadata = toml.load(METADATA_FILENAME)
     _download_raw_dataset(metadata, DL_DATA_DIRNAME)

@@ -15,7 +15,7 @@ NUM_WORKERS = 0
 class BaseDataModule(pl.LightningDataModule):
     """Base data module class."""
 
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, args: Optional[argparse.Namespace]):
         super().__init__()
 
         if args is None:
@@ -69,7 +69,8 @@ class BaseDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
-            drop_last=True
+            drop_last=True,
+            shuffle=True
         )
 
     def val_dataloader(self) -> DataLoader:  # pylint: disable=arguments-differ
@@ -79,7 +80,8 @@ class BaseDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
-            drop_last=False
+            drop_last=False,
+            shuffle=False
         )
 
     def test_dataloader(self) -> DataLoader:  # pylint: disable=arguments-differ
@@ -89,5 +91,6 @@ class BaseDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
-            drop_last=False
+            drop_last=False,
+            shuffle=False
         )

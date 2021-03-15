@@ -30,11 +30,12 @@ def _download_raw_dataset(metadata: Dict[str, str], dl_path: Path) -> Path:
 
 def calculate_mean_and_std(data_module: pl.LightningDataModule) -> torch.Tensor:
     """Calculates mean and std of an image dataset.
+
     Adopted from http://notmatthancock.github.io/2017/03/23/simple-batch-stat-updates.html.
-    
+
     Args:
         data_module: an image data module for which to calculate mean and std.
-    
+
     Returns:
         A tensor of mean and std (shape=(2, 3)).
     """
@@ -57,5 +58,5 @@ def calculate_mean_and_std(data_module: pl.LightningDataModule) -> torch.Tensor:
         stats[1] = torch.sqrt(stats[1])
 
         n_samples = new_n_samples
-        
+
     return stats
