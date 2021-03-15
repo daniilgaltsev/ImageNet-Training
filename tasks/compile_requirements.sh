@@ -11,7 +11,7 @@ cd "$path/../requirements" || { echo "cd failed"; exit 1; }
 echo "Compiling prod requirements"
 pip-compile --find-links=https://download.pytorch.org/whl/torch_stable.html requirements.in || FAILURE=true
 echo "Compiling dev requirements"
-pip-compile --find-links=https://download.pytorch.org/whl/torch_stable.html requirements-dev.in || FAILURE=true
+pip-compile requirements-dev.in || FAILURE=true
 
 if [ "$FAILURE" = true ]; then
   echo "Compiling failed"

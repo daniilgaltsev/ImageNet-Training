@@ -44,7 +44,7 @@ class ResNet(nn.Module):
 
         input_dims = data_config["input_dims"]
         if len(input_dims) != 4:
-            raise ValueError(f"Expected input_dims to have 4 dimensions got {len(input_dims)}")
+            raise ValueError(f"Expected input_dims to have 4 dimensions got {len(input_dims)} ({input_dims})")
         if input_dims[2] < 32 or input_dims[3] < 32:
             raise ValueError(f"Minimum input width and height for ResNet is 32 (3x32x32) got {input_dims}.")
         num_classes = len(data_config["mapping"])

@@ -9,10 +9,9 @@ mypy
 pillow
 pycodestyle
 pydocstyle
-pylint==2.6.0
-astroid < 2.5
+pylint
+astroid
 pytest
-pyyaml
 safety
 scipy
 shellcheck-py

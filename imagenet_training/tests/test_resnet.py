@@ -5,10 +5,10 @@ from typing import Tuple
 import pytest
 import torch
 
-from imagenet_training.models.resnet import ResNet
+from imagenet_training.models import ResNet
 
 
-@pytest.mark.parametrize("model_type, input_shape", [
+@pytest.mark.parametrize("resnet_type, input_shape", [
     ("resnet18", (2, 3, 32, 32)),
     ("resnet18", (3, 3, 37, 43)),
     ("resnet34", (2, 3, 32, 32)),
@@ -16,14 +16,14 @@ from imagenet_training.models.resnet import ResNet
     ("resnet50", (2, 3, 37, 43)),
     ("resnet101", (2, 3, 32, 32)),
 ])
-def test_resnet_shapes(model_type: str, input_shape: Tuple[int, int, int, int]):
+def test_resnet_shapes(resnet_type: str, input_shape: Tuple[int, int, int, int]):
     """ Test that scripted LightningModule forward works. """
     class Args():
         pass
     args = Args()
-    args.model_type = model_type
+    args.resnet_type = resnet_type
     config = {
-        "input_dims": input_shape[1:],
+        "input_dims": (1, *input_shape[1:]),
         "mapping": [1] * (10 + 3 * input_shape[-1]),
     }
 
