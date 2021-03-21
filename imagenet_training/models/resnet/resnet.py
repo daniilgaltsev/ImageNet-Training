@@ -4,7 +4,7 @@
 import argparse
 from collections import OrderedDict
 import importlib
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
 import torch.nn as nn
@@ -93,12 +93,14 @@ class _ResNet(nn.Module):
 
     def __init__(
         self,
-        num_blocks: Tuple[int, int, int, int],
-        block: Callable[..., Union[ResNetBlock, ResNetBottleneck]],
+        num_blocks: List[int],
+        block: Type[Union[ResNetBlock, ResNetBottleneck]],
         num_classes: int
     ):
         super().__init__()
 
+        if len(num_blocks) != 4:
+            raise ValueError(f"Incorrect number of blocks. Should be 4 got {len(num_blocks)} ({num_blocks}).")
         self.block = block
         self._last_channels = self._base_channels
         self.model = nn.Sequential(OrderedDict([

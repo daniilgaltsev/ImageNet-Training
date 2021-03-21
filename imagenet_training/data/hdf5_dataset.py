@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import random
-from typing import Any, Optional, Callable, Union, Tuple, Sequence
+from typing import Any, Callable, Generator, Union, Optional, Tuple, Sequence
 
 import h5py
 import torch
@@ -91,7 +91,7 @@ class HDF5Dataset(IterableDataset):
         self.buffer_data, self.buffer_targets = zip(*loaded)
         return False
 
-    def __iter__(self) -> Tuple[Any, Any]:
+    def __iter__(self) -> Generator[Tuple[Any, Any], None, None]:
         """Iterates through the data with buffer loading and shuffling based on the id of a worker."""
         worker_info = get_worker_info()
         if worker_info is None:

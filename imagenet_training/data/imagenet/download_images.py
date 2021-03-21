@@ -10,7 +10,7 @@ import aiofiles
 import aiohttp
 
 
-async def download_image(
+async def _download_image(
     url: str,
     filename: Union[Path, str],
     semaphore: asyncio.Semaphore,
@@ -44,7 +44,7 @@ async def download_image(
         return False
 
 
-async def download_synset_images(
+async def _download_synset_images(
     images_data_dirname: Path,
     urls: List[str],
     synset: str,
@@ -72,7 +72,7 @@ async def download_synset_images(
         end = last_tried + (n_to_download - downloaded)
         print(f"{synset}: {downloaded}/{n_to_download} next batch {last_tried}-{end}")
         results = await asyncio.gather(
-            *[download_image(
+            *[_download_image(
                 urls[idx],
                 images_data_dirname / "{}_{}.jpg".format(synset, idx),
                 semaphore,
@@ -86,7 +86,7 @@ async def download_synset_images(
     return downloaded
 
 
-async def download_subsampled_images(
+async def _download_subsampled_images(
     images_dirname: Path,
     synsets: List[str],
     synsets_to_urls: Dict[str, List[str]],
@@ -110,7 +110,7 @@ async def download_subsampled_images(
     images_dirname.mkdir(exist_ok=True, parents=True)
     semaphore = asyncio.Semaphore(max_concurrent)
     result = await asyncio.gather(
-        *[download_synset_images(
+        *[_download_synset_images(
             images_dirname,
             synsets_to_urls[synset],
             synset,
@@ -119,3 +119,35 @@ async def download_subsampled_images(
             timeout) for synset in synsets]
     )
     return list(result)
+
+
+def download_subsampled_images(
+    images_dirname: Path,
+    synsets: List[str],
+    synsets_to_urls: Dict[str, List[str]],
+    images_per_class: int,
+    max_concurrent: int,
+    timeout: float
+) -> List[int]:
+    """Downloads images using given urls.
+
+    Args:
+        images_dirname: A path where to save images.
+        synsets: A list of synsets for which to download images.
+        synsets_to_urls: A dict of synsets to their corresponding lists of urls.
+        images_per_class: A number of images per synset/class to download.
+        max_concurrent: A maximum number of concurrent image download-writes.
+        timeout: Time until download is abandoned.
+
+    Returns:
+        A list describing number of images per synsets that were downloaded.
+    """
+    downloaded_images = asyncio.run(_download_subsampled_images(
+        images_dirname=images_dirname,
+        synsets=synsets,
+        synsets_to_urls=synsets_to_urls,
+        images_per_class=images_per_class,
+        max_concurrent=max_concurrent,
+        timeout=timeout
+    ))
+    return downloaded_images

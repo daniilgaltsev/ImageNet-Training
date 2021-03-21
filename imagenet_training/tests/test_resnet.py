@@ -19,9 +19,10 @@ from imagenet_training.models import ResNet
 def test_resnet_shapes(resnet_type: str, input_shape: Tuple[int, int, int, int]):
     """ Test that scripted LightningModule forward works. """
     class Args():
-        pass
-    args = Args()
-    args.resnet_type = resnet_type
+        def __init__(self, resnet_type: str):
+            self.resnet_type = resnet_type
+
+    args = Args(resnet_type)
     config = {
         "input_dims": (1, *input_shape[1:]),
         "mapping": [1] * (10 + 3 * input_shape[-1]),

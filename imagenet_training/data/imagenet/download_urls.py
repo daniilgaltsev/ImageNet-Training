@@ -5,7 +5,7 @@ import asyncio
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import aiohttp
 
@@ -13,10 +13,10 @@ import aiohttp
 GET_SYNSET_URL_API = "http://www.image-net.org/api/text/imagenet.synset.geturls?wnid={}"
 
 
-async def download_urls_for_synset(
+async def _download_urls_for_synset(
     synset: str,
     semaphore: asyncio.Semaphore
-) -> List[str]:
+) -> Tuple[str, Optional[List[str]]]:
     """Downloads a list of urls for a given synset.
 
     Args:
@@ -42,12 +42,12 @@ async def download_urls_for_synset(
     return synset, image_urls
 
 
-async def download_image_urls(
+async def _download_image_urls(
     urls_filename: Union[Path, str],
     synsets: List[str],
     max_concurrent: int = 50,
     rewrite: bool = False
-) -> Dict[str, List[str]]:
+) -> Dict[str, Optional[List[str]]]:
     """Downloads urls for each synset and saves them in json format in a given path.
 
     Args:
@@ -59,17 +59,37 @@ async def download_image_urls(
     if (not rewrite) and os.path.exists(urls_filename):
         with open(urls_filename, "r") as f:
             return json.load(f)
-    semaphore = asyncio.Semaphore(max_concurrent)
-    synsets_to_urls = await asyncio.gather(*[download_urls_for_synset(synset, semaphore) for synset in synsets])
-    synsets_to_urls = dict(synsets_to_urls)
+    raise NotImplementedError("The ImageNet site was updated and there is no longer access to lists of urls by synset.")
+    semaphore = asyncio.Semaphore(max_concurrent)  # pylint: disable=unreachable
+    synsets_to_urls = dict(await asyncio.gather(*[_download_urls_for_synset(synset, semaphore) for synset in synsets]))
     with open(urls_filename, "w") as f:
         json.dump(synsets_to_urls, f)
+    print(len(synsets_to_urls))
+    return synsets_to_urls
+
+
+def download_image_urls(
+    urls_filename: Union[Path, str],
+    synsets: List[str],
+    max_concurrent: int = 50,
+    rewrite: bool = False
+) -> Dict[str, Optional[List[str]]]:
+    """Downloads urls for each synset and saves them in json format in a given path.
+
+    Args:
+        urls_filename: a path to the file where to save the urls.
+        synsets: a list of synsets for which to download urls.
+        max_concurrent (optional): a maximum number of concurrent requests.
+        rewrite (optional): if True, will download new urls even if file exists.
+    """
+    print("Downloading image urls.")
+    synsets_to_urls = asyncio.run(_download_image_urls(urls_filename, synsets, max_concurrent, rewrite))
     return synsets_to_urls
 
 
 def parse_synset_mapping(
     synset_mapping_filename: Union[Path, str]
-) -> Tuple[List[str], Dict[str, List[str]]]:
+) -> Tuple[List[str], Dict[str, str]]:
     """Parses the synset mapping file.
 
     Args:
@@ -82,9 +102,7 @@ def parse_synset_mapping(
     synsets = []
     with open(synset_mapping_filename, "r") as f:
         for line in f:
-            line = line.rstrip().split(' ', maxsplit=1)
-            synset = line[0]
-            name = line[1]
+            synset, name = line.rstrip().split(' ', maxsplit=1)
             synsets.append(synset)
             synset_mapping[synset] = name
     return synsets, synset_mapping
