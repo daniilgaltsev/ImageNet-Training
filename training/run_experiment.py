@@ -39,10 +39,13 @@ def _setup_parser() -> argparse.ArgumentParser:
     parser.add_argument("--data_class", type=str, default="CIFAR10", help="Name of data module to use.")
     parser.add_argument("--model_class", type=str, default="MLP", help="Name of model module to use.")
 
-    parser.add_argument("--use_wandb", default=False, action="store_true", help="If true, will use wandb.")
+    parser.add_argument("--use_wandb", default=False, action="store_true", help="If True, will use wandb.")
     parser.add_argument("--group", type=str, default="", help="Experiment group to log in wandb.")
 
     parser.add_argument("--patience", type=int, default=10, help="Patience for Early Stopping.")
+    parser.add_argument(
+        "--use_lr_monitor", default=False, action="store_true", help="If True. will use LRMonitor callback."
+    )
 
     parser.add_argument("--seed", type=int, default=SEED)
 
@@ -76,7 +79,6 @@ def main() -> None:
     parser = _setup_parser()
     args = parser.parse_args()
     print("Running an experiment with specified args:")
-    # ipdb.set_trace()
     print(args)
 
     _set_seeds(args.seed)
@@ -93,7 +95,10 @@ def main() -> None:
         wandb_logger = WandbLogger(config=args, group=args.group)
         loggers.append(wandb_logger)
 
-    callbacks = [pl.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=args.patience)]
+    callbacks = []
+    callbacks.append(pl.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=args.patience))
+    if args.use_lr_monitor:
+        callbacks.append(pl.callbacks.LearningRateMonitor())
 
     args.weights_summary = "full"
 
