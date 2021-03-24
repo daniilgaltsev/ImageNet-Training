@@ -12,6 +12,7 @@ import torch.nn as nn
 
 OPTIMIZER = "Adam"
 LR = 1e-3
+WEIGHT_DECAY = 0.0
 LR_SCHEDULER = None
 PCT_START = 0.3
 LOSS = "cross_entropy"
@@ -41,9 +42,12 @@ class BaseLitModel(pl.LightningModule):
         optimizer = self.args.get("optimizer", OPTIMIZER)
         self.optimizer_class = getattr(torch.optim, optimizer)
         self.scheduler = self.args.get("lr_scheduler", LR_SCHEDULER)
+        if self.scheduler is not None:
+            self.scheduler_class = getattr(torch.optim.lr_scheduler, self.scheduler)
         self.pct_start = self.args.get("pct_start", PCT_START)
 
         self.lr = self.args.get("lr", LR)
+        self.weight_decay = self.args.get("weight_decay", WEIGHT_DECAY)
 
         loss = self.args.get("loss", LOSS)
         self.loss_fn = getattr(nn.functional, loss)
@@ -57,7 +61,10 @@ class BaseLitModel(pl.LightningModule):
         """Adds possible args to the given parser."""
         parser.add_argument("--optimizer", type=str, default=OPTIMIZER, help="Name of optimizer from torch.optim.")
         parser.add_argument("--lr", type=float, default=LR, help="Base learning rate.")
-        parser.add_argument("--lr_scheduler", type=str, default=None, help="LR scheduler to use.")
+        parser.add_argument(
+            "--weight_decay", type=float, default=WEIGHT_DECAY, help="Weight decay to use in optimizer."
+        )
+        parser.add_argument("--lr_scheduler", type=str, default=None, help="LR scheduler to use from torch.optim.")
         parser.add_argument(
             "--pct_start", type=float, default=PCT_START,
             help="The percentage of the cycle spent increasing the learning rate. Used with OneCycleLR."
@@ -67,22 +74,25 @@ class BaseLitModel(pl.LightningModule):
 
     def configure_optimizers(self) -> Any:
         """Inits and returns optimizer to use."""
-        optimizer = self.optimizer_class(self.parameters(), lr=self.lr)
+        optimizer = self.optimizer_class(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+
+        if self.scheduler is None:
+            return optimizer
 
         if self.scheduler == "OneCycleLR":
             num_gpus = self.trainer.num_gpus
             num_gpus += (num_gpus == 0)
             steps_per_epoch = len(self.train_dataloader()) // num_gpus
             epochs = self.trainer.max_epochs
-            scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            scheduler = self.scheduler_class(
                 optimizer, self.lr,
                 epochs=epochs,
                 steps_per_epoch=steps_per_epoch,
-                verbose=True
             )
             return [optimizer], [{"scheduler": scheduler, "interval": "step"}]
 
-        return optimizer
+        scheduler = self.scheduler_class(optimizer)
+        return [optimizer], [{"scheduler": scheduler, "monitor": "val_loss"}]
 
     def forward(self, x: Any) -> Any:  # pylint: disable=arguments-differ
         """Performs a forward operation."""

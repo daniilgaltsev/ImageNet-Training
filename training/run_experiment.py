@@ -42,7 +42,7 @@ def _setup_parser() -> argparse.ArgumentParser:
     parser.add_argument("--use_wandb", default=False, action="store_true", help="If True, will use wandb.")
     parser.add_argument("--group", type=str, default="", help="Experiment group to log in wandb.")
 
-    parser.add_argument("--patience", type=int, default=10, help="Patience for Early Stopping.")
+    parser.add_argument("--patience", type=int, default=12, help="Patience for Early Stopping.")
     parser.add_argument(
         "--use_lr_monitor", default=False, action="store_true", help="If True. will use LRMonitor callback."
     )
