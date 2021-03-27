@@ -36,6 +36,10 @@ CROP_SIZE = 224
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 WORKER_BUFFER_SIZE = 1024
+COLOR_JITTER = 0.0
+HORIZONTAL_FLIP = False
+RANDOM_RESIZED_CROP = False
+RANDOM_ERASING = False
 
 RAW_DATA_DIRNAME = BaseDataModule.data_dirname() / "raw" / "imagenet"
 METADATA_FILENAME = RAW_DATA_DIRNAME / "metadata.toml"
@@ -66,6 +70,10 @@ class ImageNet(BaseDataModule):
         self.use_kaggle = self.args.get("use_kaggle", USE_KAGGLE)
         self.processing_workers = self.args.get("processing_workers", PROCESSING_WORKERS)
         self.worker_buffer_size = self.args.get("worker_buffer_size", WORKER_BUFFER_SIZE)
+        self.color_jitter = self.args.get("color_jitter", COLOR_JITTER)
+        self.horizontal_flip = self.args.get("horizontal_flip", HORIZONTAL_FLIP)
+        self.random_resized_crop = self.args.get("random_resized_crop", RANDOM_RESIZED_CROP)
+        self.random_erasing = self.args.get("random_erasing", RANDOM_ERASING)
 
         if self.rewrite or not os.path.exists(ESSENTIALS_FILENAME):
             _process_imagenet(
@@ -88,11 +96,23 @@ class ImageNet(BaseDataModule):
         self.data_train = None
         self.data_val = None
         self.data_test = None
-        self.train_transform = transforms.Compose([
+
+        self._set_transforms()
+
+    def _set_transforms(self):
+        """Inits and assigns train and val transform members."""
+        train_transform_list = [
             transforms.ToTensor(),
-            transforms.RandomCrop(CROP_SIZE),
-            transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD)
-        ])
+            transforms.RandomResizedCrop(CROP_SIZE) if self.random_resized_crop else transforms.RandomCrop(CROP_SIZE),
+        ]
+        if self.horizontal_flip:
+            train_transform_list.append(transforms.RandomHorizontalFlip())
+        if self.color_jitter:
+            train_transform_list.append(transforms.ColorJitter(self.color_jitter, self.color_jitter, self.color_jitter))
+        train_transform_list.append(transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD))
+        if self.random_erasing:
+            train_transform_list.append(transforms.RandomErasing())
+        self.train_transform = transforms.Compose(train_transform_list)
         self.val_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.CenterCrop(CROP_SIZE),
@@ -107,40 +127,44 @@ class ImageNet(BaseDataModule):
         """Adds arguments to parser required for the ImageNet."""
         parser = BaseDataModule.add_to_argparse(parser, main_parser)
         parser.add_argument(
-            "--subsample_classes",
-            type=int,
-            default=SUBSAMPLE_CLASSES,
+            "--subsample_classes", type=int, default=SUBSAMPLE_CLASSES,
             help="A number of classes to use."
         )
         parser.add_argument(
-            "--images_per_class",
-            type=int,
-            default=IMAGES_PER_CLASS,
+            "--images_per_class", type=int, default=IMAGES_PER_CLASS,
             help="A number of images per class to use."
         )
         parser.add_argument(
-            "--rewrite",
-            default=False,
-            action="store_true",
+            "--rewrite", default=False, action="store_true",
             help="If True, will rewrite existing processing file."
         )
         parser.add_argument(
-            "--use_kaggle",
-            default=False,
-            action="store_true",
+            "--use_kaggle", default=False, action="store_true",
             help="If True, will process kaggle's .tar.gz file."
         )
         parser.add_argument(
-            "--processing_workers",
-            type=int,
-            default=PROCESSING_WORKERS,
+            "--processing_workers", type=int, default=PROCESSING_WORKERS,
             help="A number of subprocesses to use during processing."
         )
         parser.add_argument(
-            "--worker_buffer_size",
-            type=int,
-            default=WORKER_BUFFER_SIZE,
+            "--worker_buffer_size", type=int, default=WORKER_BUFFER_SIZE,
             help="A size of the buffer of each dataloader worker."
+        )
+        parser.add_argument(
+            "--random_resized_crop", default=False, action="store_true",
+            help="If True, will perform random resize and rescaling before cropping."
+        )
+        parser.add_argument(
+            "--horizontal_flip", default=False, action="store_true",
+            help="If Trie, will flip an image horizontally with p=0.5."
+        )
+        parser.add_argument(
+            "--color_jitter", type=float, default=COLOR_JITTER,
+            help="Specifies the maximum random change in the brigtness, contranst and saturation of an image."
+        )
+        parser.add_argument(
+            "--random_erasing", default=False, action="store_true",
+            help="If True, will randomly erase pixels in a rectange region of an image."
         )
         return parser
 
