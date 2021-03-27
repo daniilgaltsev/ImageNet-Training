@@ -3,6 +3,7 @@
 import argparse
 import importlib
 import random
+import warnings
 
 import numpy as np
 import pytorch_lightning as pl
@@ -42,7 +43,7 @@ def _setup_parser() -> argparse.ArgumentParser:
     parser.add_argument("--use_wandb", default=False, action="store_true", help="If True, will use wandb.")
     parser.add_argument("--group", type=str, default="", help="Experiment group to log in wandb.")
 
-    parser.add_argument("--patience", type=int, default=12, help="Patience for Early Stopping.")
+    parser.add_argument("--es_patience", type=int, default=12, help="Patience for Early Stopping.")
     parser.add_argument(
         "--use_lr_monitor", default=False, action="store_true", help="If True. will use LRMonitor callback."
     )
@@ -54,13 +55,13 @@ def _setup_parser() -> argparse.ArgumentParser:
     model_class = _import_class(MODEL_CLASS_TEMPLATE.format(temp_args.model_class))
 
     data_group = parser.add_argument_group(f"Data Args for {temp_args.data_class}")
-    data_class.add_to_argparse(data_group)
+    data_class.add_to_argparse(data_group, parser)
 
     model_group = parser.add_argument_group(f"Model Args for {temp_args.model_class}")
-    model_class.add_to_argparse(model_group)
+    model_class.add_to_argparse(model_group, parser)
 
     lit_model_group = parser.add_argument_group("LitModel Args")
-    lit_models.BaseLitModel.add_to_argparse(lit_model_group)
+    lit_models.BaseLitModel.add_to_argparse(lit_model_group, parser)
 
     parser.add_argument("--help", "-h", action="help")
 
@@ -77,7 +78,9 @@ def _set_seeds(seed: int) -> None:
 def main() -> None:
     """Runs an experiment with specified args."""
     parser = _setup_parser()
-    args = parser.parse_args()
+    args, unknown_args = parser.parse_known_args()
+    if unknown_args:
+        warnings.warn(f"Got unknown args: {unknown_args}")
     print("Running an experiment with specified args:")
     print(args)
 
@@ -96,7 +99,7 @@ def main() -> None:
         loggers.append(wandb_logger)
 
     callbacks = []
-    callbacks.append(pl.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=args.patience))
+    callbacks.append(pl.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=args.es_patience))
     if args.use_lr_monitor:
         callbacks.append(pl.callbacks.LearningRateMonitor())
 

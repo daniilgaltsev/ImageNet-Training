@@ -10,6 +10,7 @@ from typing import Optional
 
 import h5py
 import numpy as np
+from sklearn.model_selection import train_test_split
 import toml
 import torch
 from torchvision import transforms
@@ -21,6 +22,7 @@ from imagenet_training.data.utils import _download_raw_dataset
 
 TRAIN_SPLIT = 0.8
 SEED = 0
+IMAGE_SHIFT = 0.0
 
 RAW_DATA_DIRNAME = BaseDataModule.data_dirname() / "raw" / "cifar10"
 METADATA_FILENAME = RAW_DATA_DIRNAME / "metadata.toml"
@@ -36,6 +38,12 @@ class CIFAR10(BaseDataModule):
     def __init__(self, args: Optional[argparse.Namespace] = None):
         super().__init__(args)
 
+        if args is None:
+            self.args = {}
+        else:
+            self.args = vars(args)
+        self.seed = self.args.get("seed", SEED)
+
         if not os.path.exists(ESSENTIALS_FILENAME):
             _download_and_process_cifar10()
         with open(ESSENTIALS_FILENAME) as f:
@@ -46,11 +54,16 @@ class CIFAR10(BaseDataModule):
         self.data_train = None
         self.data_val = None
         self.data_test = None
-        self.transform = transforms.Compose([
+        transforms_list = [
             transforms.ToTensor(),
             # Calculated using imagenet_trianing.data.utils.calculate_mean_and_std
             transforms.Normalize([0.4918, 0.4824, 0.4467], [0.2470, 0.2434, 0.2617])
-        ])
+        ]
+        self.transform_val = transforms.Compose(transforms_list[:])
+        image_shift = self.args.get("image_shift", IMAGE_SHIFT)
+        if image_shift != 0.0:
+            transforms_list[1:1] = [transforms.RandomAffine(degrees=0, translate=(image_shift, image_shift))]
+        self.transform_train = transforms.Compose(transforms_list)
         self.dims = (1, essentials['input_shape'][2], *essentials['input_shape'][:2])
         self.output_dims = (len(self.mapping),)
 
@@ -65,21 +78,33 @@ class CIFAR10(BaseDataModule):
         """Prepares data for each process given stage."""
         if stage == 'fit' or stage is None:
             with h5py.File(PROCESSED_DATA_FILENAME, "r") as f:
-                self.x_trainval = f['x_train'][:]
-                self.y_trainval = f['y_train'][:].astype(np.int64)
+                x_trainval = f['x_train'][:]
+                y_trainval = f['y_train'][:].astype(np.int64)
 
-            data_trainval = BaseDataset(self.x_trainval, self.y_trainval, transform=self.transform)
-            train_size = int(TRAIN_SPLIT * len(data_trainval))
-            val_size = len(data_trainval) - train_size
-            self.data_train, self.data_val = torch.utils.data.random_split(
-                data_trainval, [train_size, val_size], generator=torch.Generator().manual_seed(SEED)
+            self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
+                x_trainval, y_trainval,
+                train_size=TRAIN_SPLIT, shuffle=True, random_state=self.seed, stratify=y_trainval
             )
+            self.data_train = BaseDataset(self.x_train, self.y_train, transform=self.transform_train)
+            self.data_val = BaseDataset(self.x_val, self.y_val, transform=self.transform_val)
 
         if stage == 'test' or stage is None:
             with h5py.File(PROCESSED_DATA_FILENAME, "r") as f:
                 self.x_test = f['x_test'][:]
                 self.y_test = f['y_test'][:].astype(np.int64)
-            self.data_test = BaseDataset(self.x_test, self.y_test, transform=self.transform)
+            self.data_test = BaseDataset(self.x_test, self.y_test, transform=self.transform_val)
+
+    @staticmethod
+    def add_to_argparse(
+        parser: argparse.ArgumentParser,
+        main_parser: argparse.ArgumentParser
+    ) -> argparse.ArgumentParser:
+        """Adds arguments to parser required for the CIFAR10."""
+        parser = BaseDataModule.add_to_argparse(parser, main_parser)
+        parser.add_argument(
+            "--image_shift", type=float, default=IMAGE_SHIFT, help="If not zero, will shift images by this fraction."
+        )
+        return parser
 
 
 def _download_and_process_cifar10() -> None:

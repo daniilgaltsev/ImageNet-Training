@@ -39,7 +39,10 @@ class BaseDataModule(pl.LightningDataModule):
         return Path(__file__).resolve().parents[2] / "data"
 
     @staticmethod
-    def add_to_argparse(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    def add_to_argparse(
+        parser: argparse.ArgumentParser,
+        main_parser: argparse.ArgumentParser  # pylint: disable=unused-argument
+    ) -> argparse.ArgumentParser:
         """Adds arguments to parser required for the BaseDataModule."""
         parser.add_argument(
             "--batch_size", type=int, default=BATCH_SIZE, help="Number of examples per batch."

@@ -17,6 +17,7 @@ from imagenet_training.data.hdf5_dataset import HDF5Dataset
 from .download_urls import parse_synset_mapping, download_image_urls, get_synset_stats
 from .download_images import download_subsampled_images
 from .process_downloaded import DownloadedProcessor
+from .process_kaggle import KaggleProcessor
 
 
 SEED = 0
@@ -41,7 +42,7 @@ METADATA_FILENAME = RAW_DATA_DIRNAME / "metadata.toml"
 SYNSET_MAPPING_FILENAME = RAW_DATA_DIRNAME / "LOC_synset_mapping.txt"
 URLS_FILENAME = RAW_DATA_DIRNAME / "urls.json"
 DL_DATA_DIRNAME = BaseDataModule.data_dirname() / "downloaded" / "imagenet"
-DATASET_KAGGLE_FILENAME = DL_DATA_DIRNAME / "imagenet_object_localization_patched2019.tar.gz"
+KAGGLE_DATASET_DIRNAME = DL_DATA_DIRNAME
 IMAGES_DATA_DIRNAME = DL_DATA_DIRNAME / "images"
 PROCESSED_DATA_DIRNAME = BaseDataModule.data_dirname() / "processed" / "imagenet"
 PROCESSED_DATA_FILENAME = PROCESSED_DATA_DIRNAME / "processed.h5"
@@ -66,7 +67,7 @@ class ImageNet(BaseDataModule):
         self.processing_workers = self.args.get("processing_workers", PROCESSING_WORKERS)
         self.worker_buffer_size = self.args.get("worker_buffer_size", WORKER_BUFFER_SIZE)
 
-        if not os.path.exists(ESSENTIALS_FILENAME):
+        if self.rewrite or not os.path.exists(ESSENTIALS_FILENAME):
             _process_imagenet(
                 classes=self.subsample_classes,
                 images_per_class=self.images_per_class,
@@ -99,9 +100,12 @@ class ImageNet(BaseDataModule):
         ])
 
     @staticmethod
-    def add_to_argparse(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    def add_to_argparse(
+        parser: argparse.ArgumentParser,
+        main_parser: argparse.ArgumentParser
+    ) -> argparse.ArgumentParser:
         """Adds arguments to parser required for the ImageNet."""
-        parser = BaseDataModule.add_to_argparse(parser)
+        parser = BaseDataModule.add_to_argparse(parser, main_parser)
         parser.add_argument(
             "--subsample_classes",
             type=int,
@@ -109,7 +113,7 @@ class ImageNet(BaseDataModule):
             help="A number of classes to use."
         )
         parser.add_argument(
-            "--images_classes",
+            "--images_per_class",
             type=int,
             default=IMAGES_PER_CLASS,
             help="A number of images per class to use."
@@ -200,17 +204,6 @@ def _change_target_dtype(target: np.ndarray) -> np.ndarray:
     return target.astype(dtype=np.int64)
 
 
-def _process_kaggle_imagenet(classes: int, images_per_class: int, processing_workers: int) -> None:
-    """Processes downloaded imagenet data from kaggle.
-
-    Args:
-        classes: A number of classes to process.
-        images_per_class: A number of images per class to process.
-        processing_workers: A number of subprocesses to use for reading images.
-    """
-    raise NotImplementedError
-
-
 def _process_imagenet(
     classes: int,
     images_per_class: int,
@@ -232,11 +225,20 @@ def _process_imagenet(
         return
     if use_kaggle:
         print("Using kaggle dataset.")
-        if not os.path.exists(DATASET_KAGGLE_FILENAME):
-            dataset_path_str = str(DATASET_KAGGLE_FILENAME)
-            print(f"No file found at {dataset_path_str}")
-            return
-        _process_kaggle_imagenet(classes, images_per_class, processing_workers)
+        processor = KaggleProcessor(
+            dl_data_dir=DL_DATA_DIRNAME,
+            kaggle_dataset_dirname=KAGGLE_DATASET_DIRNAME,
+            synset_mapping_filename=SYNSET_MAPPING_FILENAME,
+            processed_data_filename=PROCESSED_DATA_FILENAME,
+            essentials_filename=ESSENTIALS_FILENAME,
+            classes=classes,
+            images_per_class=images_per_class,
+            resize_size=RESIZE_SIZE,
+            train_split=TRAIN_SPLIT,
+            processing_workers=processing_workers,
+            processing_batch_size=PROCESSING_BATCH_SIZE,
+            seed=SEED
+        )
     else:
         processor = DownloadedProcessor(
             images_dirname=IMAGES_DATA_DIRNAME,
@@ -248,11 +250,11 @@ def _process_imagenet(
             resize_size=RESIZE_SIZE,
             trainval_split=TRAINVAL_SPLIT,
             train_split=TRAIN_SPLIT,
-            processing_workers=PROCESSING_WORKERS,
+            processing_workers=processing_workers,
             processing_batch_size=PROCESSING_BATCH_SIZE,
             seed=SEED
         )
-        processor.process_imagenet()
+    processor.process_imagenet()
 
 
 def _get_synset_urls() -> Tuple[Dict[str, Optional[List[str]]], Dict[str, str]]:
@@ -317,7 +319,7 @@ def _parse_args() -> argparse.Namespace:
 def download_images() -> None:
     """Downloads a subset of imagenet images based on args and prints download count."""
     args = _parse_args()
-    synsets_to_urls, synset_mapping = _get_synset_urls()  # pylint: disable=unused-variable
+    synsets_to_urls, _ = _get_synset_urls()
     start_t = time()
     res = _download_subsampled(synsets_to_urls, args.classes, args.images_per_class, args.max_concurrent, args.timeout)
     print("Downloaded images per class:", res)

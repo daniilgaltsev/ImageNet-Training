@@ -56,7 +56,10 @@ class MLP(nn.Module):
         return x
 
     @staticmethod
-    def add_to_argparse(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    def add_to_argparse(
+        parser: argparse.ArgumentParser,
+        main_parser: argparse.ArgumentParser  # pylint: disable=unused-argument
+    ) -> argparse.ArgumentParser:
         """Adds possible agrs to the given parser."""
         parser.add_argument("--fc1", type=int, default=FC1_DIM, help="Size of the first hidden MLP layer.")
         parser.add_argument("--fc2", type=int, default=FC2_DIM, help="Size of the second hidden MLP layer.")

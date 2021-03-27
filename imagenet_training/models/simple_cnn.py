@@ -59,6 +59,9 @@ class SimpleCNN(nn.Module):
         return x
 
     @staticmethod
-    def add_to_argparse(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    def add_to_argparse(
+        parser: argparse.ArgumentParser,
+        main_parser: argparse.ArgumentParser  # pylint: disable=unused-argument
+    ) -> argparse.ArgumentParser:
         """Adds possible agrs to the given parser."""
         return parser
