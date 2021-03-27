@@ -134,7 +134,7 @@ class BaseProcessor:
         with open(self.essentials_filename, "w") as f:
             json.dump(essentials, f)
 
-    def process_imagenet(
+    def process_imagenet(  # pylint: disable=too-many-arguments
         self,
         y_train: np.ndarray,
         y_val: np.ndarray,

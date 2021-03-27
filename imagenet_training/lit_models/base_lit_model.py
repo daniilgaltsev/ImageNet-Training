@@ -101,7 +101,7 @@ class BaseLitModel(pl.LightningModule):
                 pct_start=self.pct_start
             )
             return [optimizer], [{"scheduler": scheduler, "interval": "step"}]
-        elif self.scheduler == "ReduceLROnPlateau":
+        if self.scheduler == "ReduceLROnPlateau":
             scheduler = self.scheduler_class(
                 optimizer, mode=self.mode, factor=self.factor, patience=self.patience, verbose=True
             )
@@ -160,7 +160,7 @@ def _add_optimizer_args(
     """Adds arguments for parsing used for optimizer.
 
     Args:
-        group: _ArgumentGroup to expand.
+        parser: Parser for adding args.
         args: Partially parsed arguments containing optimizer arg.
     """
     opt_cls = getattr(torch.optim, args.optimizer)
@@ -181,7 +181,7 @@ def _add_lr_scheduler_args(
     """Adds arguments for parsing used for lr scheduler.
 
     Args:
-        group: _ArgumentGroup to expand.
+        parser: Parser for adding args.
         args: Partially parsed arguments containing lr_scheduler arg.
     """
     if args.lr_scheduler == "OneCycleLR":

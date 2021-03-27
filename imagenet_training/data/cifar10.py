@@ -12,7 +12,6 @@ import h5py
 import numpy as np
 from sklearn.model_selection import train_test_split
 import toml
-import torch
 from torchvision import transforms
 
 from imagenet_training.data.base_data_module import BaseDataModule
