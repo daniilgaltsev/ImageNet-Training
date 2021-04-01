@@ -55,7 +55,7 @@ class ResNet(nn.Module):
 
         if use_torchvision:
             tv_models_module = importlib.import_module("torchvision.models")
-            self.model = getattr(tv_models_module, resnet_type)
+            self.model = getattr(tv_models_module, resnet_type)()
             self.model.fc = nn.Linear(self.model.fc.in_features, num_classes)
         else:
             num_blocks, block = TYPE_TO_ARGS[resnet_type]
@@ -107,16 +107,16 @@ class _ResNet(nn.Module):
         self.block = block
         self._last_channels = self._base_channels
         self.model = nn.Sequential(OrderedDict([
-            ("norm1", nn.BatchNorm2d(3)),
-            ("relu1", nn.ReLU(inplace=True)),
             ("conv1", nn.Conv2d(kernel_size=7, in_channels=3, out_channels=self._base_channels, stride=2, padding=3)),
+            ("bn1", nn.BatchNorm2d(self._base_channels)),
+            ("relu1", nn.ReLU(inplace=True)),
             ("maxpool", nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
-            ("relu2", nn.ReLU(inplace=True)),
             ("layer1", self._make_layer(self._base_channels, num_blocks[0], stride=1)),
             ("layer2", self._make_layer(self._base_channels * 2, num_blocks[1], stride=2)),
             ("layer3", self._make_layer(self._base_channels * 4, num_blocks[2], stride=2)),
             ("layer4", self._make_layer(self._base_channels * 8, num_blocks[3], stride=2)),
-            ("relu3", nn.ReLU(inplace=True)),
+            ("bn2", nn.BatchNorm2d(self._base_channels * 8 * self.block.expansion)),
+            ("relu2", nn.ReLU(inplace=True)),
             ("avgpool", nn.AdaptiveAvgPool2d((1, 1))),
             ("flatten", nn.Flatten()),
             ("fc", nn.Linear(self._base_channels * 8 * self.block.expansion, num_classes))

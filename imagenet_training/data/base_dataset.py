@@ -24,7 +24,7 @@ class BaseDataset(torch.utils.data.Dataset):
         transform_target: Optional[Callable[..., Any]] = None,
     ):
         if len(data) != len(targets):
-            raise ValueError("Data and targets are not of equal lengths: {} != {}".format(len(data), len(targets)))
+            raise ValueError(f"Data and targets are not of equal lengths: {len(data)} != {len(targets)}")
         self.data = data
         self.targets = targets
         self.transform = transform

@@ -22,6 +22,7 @@ from imagenet_training.data.utils import _download_raw_dataset
 TRAIN_SPLIT = 0.8
 SEED = 0
 IMAGE_SHIFT = 0.0
+HORIZONTAL_FLIP = False
 
 RAW_DATA_DIRNAME = BaseDataModule.data_dirname() / "raw" / "cifar10"
 METADATA_FILENAME = RAW_DATA_DIRNAME / "metadata.toml"
@@ -59,9 +60,12 @@ class CIFAR10(BaseDataModule):
             transforms.Normalize([0.4918, 0.4824, 0.4467], [0.2470, 0.2434, 0.2617])
         ]
         self.transform_val = transforms.Compose(transforms_list[:])
+        horizontal_flip = self.args.get("horizontal_flip", HORIZONTAL_FLIP)
         image_shift = self.args.get("image_shift", IMAGE_SHIFT)
         if image_shift != 0.0:
             transforms_list[1:1] = [transforms.RandomAffine(degrees=0, translate=(image_shift, image_shift))]
+        if horizontal_flip:
+            transforms_list.append(transforms.RandomHorizontalFlip())
         self.transform_train = transforms.Compose(transforms_list)
         self.dims = (1, essentials['input_shape'][2], *essentials['input_shape'][:2])
         self.output_dims = (len(self.mapping),)
@@ -102,6 +106,10 @@ class CIFAR10(BaseDataModule):
         parser = BaseDataModule.add_to_argparse(parser, main_parser)
         parser.add_argument(
             "--image_shift", type=float, default=IMAGE_SHIFT, help="If not zero, will shift images by this fraction."
+        )
+        parser.add_argument(
+            "--horizontal_flip", default=False, action="store_true",
+            help="If True, will flip an image horizontally with p=0.5."
         )
         return parser
 

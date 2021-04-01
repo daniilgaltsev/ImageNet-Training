@@ -21,7 +21,7 @@ def _download_raw_dataset(metadata: Dict[str, str], dl_path: Path) -> Path:
     imagenet_training.utils.download_url(metadata["url"], filename)
     print("Computing SHA256.")
     sha256 = imagenet_training.utils.compute_sha256(filename)
-    print("Downloaded data sha256={}".format(sha256))
+    print(f"Downloaded data sha256={sha256}")
     if sha256 != metadata["sha256"]:
         raise ValueError("Downloaded data checksum does not match the one specified in metadata.")
 

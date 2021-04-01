@@ -156,7 +156,7 @@ class ImageNet(BaseDataModule):
         )
         parser.add_argument(
             "--horizontal_flip", default=False, action="store_true",
-            help="If Trie, will flip an image horizontally with p=0.5."
+            help="If True, will flip an image horizontally with p=0.5."
         )
         parser.add_argument(
             "--color_jitter", type=float, default=COLOR_JITTER,
@@ -347,7 +347,7 @@ def download_images() -> None:
     start_t = time()
     res = _download_subsampled(synsets_to_urls, args.classes, args.images_per_class, args.max_concurrent, args.timeout)
     print("Downloaded images per class:", res)
-    print("Time: {:.2f}".format(time() - start_t))
+    print(f"Time: {time() - start_t:.2f}")
 
 
 if __name__ == "__main__":

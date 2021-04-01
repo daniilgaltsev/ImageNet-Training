@@ -114,7 +114,7 @@ class DownloadedProcessor(BaseProcessor):
         """Processes downloaded imagenet data from urls (using python -m imagenet_training.data.imagenet.imagenet)."""
         start_t = time()
 
-        print("Getting downloaded images stats. {:.2f}".format(time() - start_t))
+        print(f"Getting downloaded images stats. {time() - start_t:.2f}")
         _, synset_mapping = parse_synset_mapping(self.synset_mapping_filename)
         image_paths, y, synset_to_class = self._get_images_to_parse()
         image_paths_train, image_paths_val, image_paths_test, y_train, y_val, y_test = self._get_splits(
