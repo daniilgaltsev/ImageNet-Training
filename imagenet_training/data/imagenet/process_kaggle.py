@@ -90,8 +90,11 @@ class KaggleProcessor(BaseProcessor):
         y_trainval = []
         for idx, synset in enumerate(synsets):
             synset_to_class[synset] = idx
-            image_paths_trainval.extend(list((self.train_data_dir / synset).glob("*"))[:self.images_per_class])
-            y_trainval.extend([idx] * self.images_per_class)
+            paths = list((self.train_data_dir / synset).glob("*"))[:self.images_per_class]
+            if len(paths) < self.images_per_class:
+                print(f"Less images than requested for {synset} ({len(paths)} < {self.images_per_class})")
+            image_paths_trainval.extend(paths)
+            y_trainval.extend([idx] * len(paths))
         y_train, y_val, image_paths_train, image_paths_val = train_test_split(
             y_trainval, image_paths_trainval,
             train_size=self.train_split, random_state=self.seed, shuffle=True, stratify=y_trainval
