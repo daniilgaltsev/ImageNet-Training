@@ -6,6 +6,7 @@ ipdb
 itermplot
 matplotlib
 mypy
+pandas
 pillow
 pycodestyle
 pydocstyle
